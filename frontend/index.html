@@ -1,0 +1,125 @@
+
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>YasinTube | Whisper Altyazı Oluşturucu</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-[#0f0f0f] text-neutral-200 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="flex items-center px-4 py-2 bg-[#212121] shadow">
+            <svg class="w-8 h-8 text-red-600 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 15L15 12L10 9V15Z" />
+            </svg>
+            <span class="text-xl font-semibold">YasinTube Subtitle Studio</span>
+        </header>
+
+        <!-- Main -->
+        <main class="flex-grow flex flex-col items-center mt-12 px-4">
+            <div class="max-w-2xl w-full">
+                <!-- File input -->
+                <label class="block mb-6">
+                    <span class="text-lg font-medium">Video Yükle</span>
+                    <input type="file" id="fileInput" accept="video/*" class="block w-full mt-2 text-sm text-gray-300
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-red-600 file:text-white
+                        hover:file:bg-red-700
+                    "/>
+                </label>
+
+                <!-- Options -->
+                <div class="flex gap-4 mb-6">
+                    <select id="language" class="flex-1 bg-[#212121] border border-gray-600 rounded px-4 py-2">
+                        <option value="tr">Türkçe</option>
+                        <option value="en">English</option>
+                        <option value="de">Deutsch</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
+                    <select id="format" class="bg-[#212121] border border-gray-600 rounded px-4 py-2">
+                        <option value="srt">SRT</option>
+                        <option value="vtt">VTT</option>
+                        <option value="txt">TXT</option>
+                    </select>
+                </div>
+
+                <!-- Upload button -->
+                <button id="uploadBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded transition">
+                    Altyazı Oluştur
+                </button>
+
+                <!-- Progress bar -->
+                <div id="progress" class="mt-8 hidden">
+                    <p class="mb-2">İşleniyor...</p>
+                    <div class="w-full bg-gray-600 h-2 rounded">
+                        <div id="progressBar" class="bg-red-500 h-2 rounded" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div id="result" class="mt-8 hidden">
+                    <p class="mb-2 text-green-400 font-medium">Altyazı hazır!</p>
+                    <a id="downloadLink" href="#" class="underline text-blue-400">Altyazıyı indir</a>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-[#212121] text-center text-sm py-3">
+            © 2025 YasinTube
+        </footer>
+
+        <script>
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('fileInput');
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar');
+            const result = document.getElementById('result');
+            const downloadLink = document.getElementById('downloadLink');
+
+            uploadBtn.onclick = () => {
+                const file = fileInput.files[0];
+                if (!file) { alert('Önce bir video seç.'); return; }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('language', document.getElementById('language').value);
+                formData.append('format', document.getElementById('format').value);
+
+                progress.classList.remove('hidden');
+                result.classList.add('hidden');
+                progressBar.style.width = '0%';
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/transcribe', true);
+
+                // Update progress bar
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        progressBar.style.width = percent + '%';
+                    }
+                };
+
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            progressBar.style.width = '100%';
+                            const res = JSON.parse(xhr.responseText);
+                            downloadLink.href = res.url;
+                            result.classList.remove('hidden');
+                        } else {
+                            alert('Bir hata oluştu: ' + xhr.responseText);
+                        }
+                    }
+                };
+
+                xhr.send(formData);
+            };
+        </script>
+    </body>
+    </html>
+    
